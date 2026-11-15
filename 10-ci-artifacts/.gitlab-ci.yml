@@ -1,0 +1,19 @@
+image: eclipse-temurin:17
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+build:
+  stage: build
+  script: ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*
+
+test:
+  stage: test
+  script: ./gradlew check
+  artifacts:
+    reports:
+      junit: build/test-results/**/*.xml
+  dependencies: []

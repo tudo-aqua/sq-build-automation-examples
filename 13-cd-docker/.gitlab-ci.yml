@@ -1,0 +1,44 @@
+image: eclipse-temurin:17
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+build:
+  stage: build
+  script: ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*
+
+test:
+  stage: test
+  script: ./gradlew check
+  artifacts:
+    reports:
+      junit: build/test-results/**/*.xml
+  dependencies: []
+
+deploy:
+  stage: deploy
+  script: ./gradlew publish
+  dependencies: []
+
+deploy-docker:
+  stage: deploy
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - >
+      echo '{
+        "auths" : {
+          "'"$CI_REGISTRY"'" : {
+            "username" : "'"$CI_REGISTRY_USER"'",
+            "password" : "'"$CI_REGISTRY_PASSWORD"'"
+          }
+        }
+      }' > /kaniko/.docker/config.json
+    - /kaniko/executor --context "$CI_PROJECT_DIR" --dockerfile "$CI_PROJECT_DIR/Dockerfile" --destination "$CI_REGISTRY_IMAGE/greeter:1.0"
+  dependencies:
+    - build
